@@ -1,7 +1,6 @@
-from audioop import avgpp
-
 from rest_framework import serializers
 from movie_app.models import Movie, Director, Review
+from rest_framework.exceptions import ValidationError
 
 class DirectorSerializer(serializers.ModelSerializer):
     movie_count = serializers.SerializerMethodField()
@@ -53,20 +52,44 @@ class MovieReviewSerializer(serializers.ModelSerializer):
         return None
 
 
+class MovieValidateSerializer(serializers.Serializer):
+    title = serializers.CharField(required=True)
+    description = serializers.CharField(required=True, min_length=10, max_length=100)
+    director_id = serializers.IntegerField()
+    duration = serializers.IntegerField()
+
+    def validate_director_id(self, director_id):
+        try:
+            Director.objects.get(id=director_id)
+        except:
+            raise ValidationError('Director does not exist')
+        return director_id
+
+    def validate_title(self, title):
+        try:
+            Movie.objects.get(title=title)
+            raise ValidationError('Такое название уже есть')
+        except Movie.DoesNotExist:
+            pass
+        return title
 
 
-# class MovieReviewSerializer(serializers.ModelSerializer):
-#     reviews = ReviewSerializer(many=True, read_only=True)
-#     average_rating = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Movie
-#         fields = 'id movies_reviews reviews average_rating'.split()
-#         depth = 1
-#
-#     def get_average_rating(self, obj):
-#         if obj.reviews.count() > 0:
-#             return obj.reviews.aggregate(avg=avgpp('stars'))['avg']
-#         return None
+    # def validate(self, attrs):
+    #     director_id = attrs['director_id']
+    #     try:
+    #         Director.objects.get(id=director_id)
+    #     except Director.DoesNotExist:
+    #         raise ValidationError('Director does not exist')
+    #     return attrs
+
+class ReviewValidateSerializer(serializers.Serializer):
+    text = serializers.CharField(required=True)
+    stars = serializers.IntegerField()
+    movie_id = serializers.IntegerField()
+
+class DirectorValidateSerializer(serializers.Serializer):
+    name = serializers.CharField(required=True)
+
+
 
 

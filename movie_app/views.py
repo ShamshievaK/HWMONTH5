@@ -1,11 +1,10 @@
-from sre_constants import error
-
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Director, Movie, Review
 from Afisha.serializers import DirectorSerializer, DirectorDetailSerializer, MovieSerializer, MovieDetailSerializer, \
-    ReviewSerializer, MovieReviewSerializer
+    ReviewSerializer, MovieReviewSerializer, MovieValidateSerializer, DirectorValidateSerializer, \
+    ReviewValidateSerializer
 
 
 @api_view(['GET', 'POST'])
@@ -15,11 +14,15 @@ def directors_list_create_api_view(request):
         data = DirectorSerializer(instance=directors, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
-        name = request.data.get('name')
+        serializer = DirectorValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        name = serializer.validated_data.get('name')
         director = Director.objects.create(name=name)    # 1 способ    # bulk_create-создает одним запросов несколько обьектов
         # director = Director(name=name)
         # Directoe(save) - 2 способ создания
         return Response(status=status.HTTP_201_CREATED, data=DirectorSerializer(director).data)
+
 
     # ДЛЯ GET ЗАПРОСА:
     # ШАГ 1: СОБРАТЬ ПОЛУЧИТ СПИСОК
@@ -27,9 +30,12 @@ def directors_list_create_api_view(request):
     # ШАГ 3: ВЕРНУТЬ ОТВЕТ В ВИДЕ JSON
 
     # ДЛЯ POST ЗАПРОСА:
+    # ШАГ 0: Проверить существует ли само значение и на типизацию(validation of data: Existing, Typing, Extra)
     # ШАГ 1: получить данные от клиента (Receive data from RequestBody)
     # ШАГ 2: с помощью полученных данных создаем (Create product by received data)
     # ШАГ 3: отдаем ответ (Return Response (status, data))
+
+
 @api_view(['GET', 'PUT', 'DELETE'])
 def directors_detail_api_view(request, id):
     try:
@@ -40,12 +46,15 @@ def directors_detail_api_view(request, id):
         data = DirectorDetailSerializer(directors, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        directors.name = request.data.get('name')
+        serializer = DirectorValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        directors.name = serializer.validated_data.get('name')
         directors.save()
         return Response(status=status.HTTP_201_CREATED, data=DirectorDetailSerializer(directors).data)
     elif request.method == 'DELETE':
         directors.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @api_view(['GET', 'POST'])
 def movie_list_create_api_view(request):
@@ -54,10 +63,13 @@ def movie_list_create_api_view(request):
         data = MovieSerializer(movies, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
-        title = request.data.get('title')
-        description = request.data.get('description')
-        duration = request.data.get('duration')
-        director_id = request.data.get('director_id')  # При ForeygnKey испльзуй id\ При Many to many используй set (Например Movie.tags.set(tags) movie.save())
+        serializer = MovieValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
+        title = serializer.validated_data.get('title')
+        description = serializer.validated_data.get('description')
+        duration = serializer.validated_data.get('duration')
+        director_id = serializer.validated_data.get('director_id')  # При ForeygnKey испльзуй id\ При Many to many используй set (Например Movie.tags.set(tags) movie.save())
         movies = Movie.objects.create(
             title=title,
             description=description,
@@ -65,6 +77,7 @@ def movie_list_create_api_view(request):
             director_id=director_id
         )
         return Response(status=status.HTTP_201_CREATED, data=MovieSerializer(movies).data)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def movie_detail_api_view(request, id):
@@ -76,15 +89,18 @@ def movie_detail_api_view(request, id):
         data = MovieDetailSerializer(movies, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        movies.title = request.data.get('title')
-        movies.description = request.data.get('description')
-        movies.duration = request.data.get('duration')
-        movies.director_id = request.data.get('director_id')
+        serializer = MovieValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        movies.title = serializer.validated_data.get('title')
+        movies.description = serializer.validated_data.get('description')
+        movies.duration = serializer.validated_data.get('duration')
+        movies.director_id = serializer.validated_data.get('director_id')
         movies.save()
         return Response(status=status.HTTP_201_CREATED, data=MovieDetailSerializer(movies).data)
     elif request.method == 'DELETE':
         movies.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @api_view(['GET', 'POST'])
 def review_list_create_api_view(request):
@@ -93,15 +109,19 @@ def review_list_create_api_view(request):
         data = ReviewSerializer(reviews, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
-        text = request.data.get('text')
-        movie_id = request.data.get('movie_id')
-        stars = request.data.get('stars')
+        serializer = ReviewValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        text = serializer.validated_data.get('text')
+        movie_id = serializer.validated_data.get('movie_id')
+        stars = serializer.validated_data.get('stars')
         reviews = Review.objects.create(
             text=text,
             movie_id=movie_id,
             stars=stars
         )
         return Response(status=status.HTTP_201_CREATED, data=ReviewSerializer(reviews).data)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def review_detail_api_view(request, id):
@@ -113,14 +133,17 @@ def review_detail_api_view(request, id):
         data = ReviewSerializer(reviews, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        reviews.text = request.data.get('text')
-        reviews.movie_id = request.data.get('movie_id')
-        reviews.stars = request.data.get('stars')
+        serializer = ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        reviews.text = serializer.validated_data.get('text')
+        reviews.movie_id = serializer.validated_data.get('movie_id')
+        reviews.stars = serializer.validated_data.get('stars')
         reviews.save()
         return Response(status=status.HTTP_201_CREATED, data=ReviewSerializer(reviews).data)
     elif request.method == 'DELETE':
         reviews.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @api_view(['GET'])
 def movie_review_api_view(request):
