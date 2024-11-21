@@ -15,16 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from movie_app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/directors/', views.directors_list_create_api_view),    # GET-list, POST-create
-    path('api/v1/directors/<int:id>/', views.directors_detail_api_view),  # GET-item, PUT-update, DELETE-destroy
-    path('api/v1/movies/', views.movie_list_create_api_view),
-    path('api/v1/movies/<int:id>/', views.movie_detail_api_view),
-    path('api/v1/reviews/', views.review_list_create_api_view),
-    path('api/v1/reviews/<int:id>/', views.review_detail_api_view),
-    path('api/v1/movies/reviews/', views.movie_review_api_view),
+    path('api/v1/', include('movie_app.urls')),
+    path('api/v1/users/', include('users.urls')),
+
+    # path('api/v1/movies/', include('movies.urls')),
+    # path('api/v1/directors/', views.directors_list_create_api_view),    # GET-list, POST-create
+    # path('api/v1/directors/<int:id>/', views.directors_detail_api_view),  # GET-item, PUT-update, DELETE-destroy
+    # path('api/v1/movies/', views.movie_list_create_api_view),
+    # path('api/v1/movies/<int:id>/', views.movie_detail_api_view),
+    # path('api/v1/reviews/', views.review_list_create_api_view),
+    # path('api/v1/reviews/<int:id>/', views.review_detail_api_view),
+    # path('api/v1/movies/reviews/', views.movie_review_api_view),
 ]

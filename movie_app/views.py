@@ -1,8 +1,14 @@
+from multiprocessing.managers import Token
+
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.admin import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+
+from . import serializers
 from .models import Director, Movie, Review
-from Afisha.serializers import DirectorSerializer, DirectorDetailSerializer, MovieSerializer, MovieDetailSerializer, \
+from movie_app.serializers import DirectorSerializer, DirectorDetailSerializer, MovieSerializer, MovieDetailSerializer, \
     ReviewSerializer, MovieReviewSerializer, MovieValidateSerializer, DirectorValidateSerializer, \
     ReviewValidateSerializer
 
@@ -150,6 +156,77 @@ def movie_review_api_view(request):
     movies = Movie.objects.prefetch_related('reviews').all()
     data = MovieReviewSerializer(movies, many=True).data
     return Response(data=data)
+
+
+
+
+
+
+
+
+# ================================================================================================================================================================
+# # Вьюшка для ДЗ
+# # from rest_framework.decorators import api_view
+# # from rest_framework.response import Response
+# # from django.contrib.auth.models import User
+# # from rest_framework import status
+# # from .serializers import UserCeateSerializer
+# # from django.contrib.auth import authenticate
+# # from rest_framework.exceptions import ValidationError, UserAUthSerializer
+#
+#
+#
+#
+# @api_view(['POST'])
+# def registration_api_view(request):
+#     # username = request.data.get('username')
+#     # password = request.data.get('password')
+#     serializer = UserCreateSerializer(data=request.data)
+#     serializer.is_valid(raise_exception=True)
+#     username = serializers.validated_data.get('username')
+#     password = serializers.validated_data.get('password')
+#     email = serializers.validated_data.get('email')
+#
+#     user = User.objects.create_user(username=username, password=password, is_active=False)
+#     return Response(data={'user_id': user.id}, status=status.HTTP_201_CREATED)
+#
+# # def confirm_api_view(request):
+#
+# @api_view(['POST'])
+# def authorization_api_view(request):
+#     serializer = UserAuthSerializer(data=request.data)
+#     serializer.is_valid(raise_exception=True)
+#
+#     # username = serializer.validated_data.get('username')
+#     # password = serializer.validated_data.get('password')
+#     # user =  authenticate(username=username, password=password)
+#
+#     user =  authenticate(**serializer.validated_data)  # - упрощенный вариант без закоментированных
+#     if user is not None:
+#         token, _ = Token.objects.get_or_create(user=user)
+#         # token = Token.objects.get(user=user)
+#         return Response(data={'key': token.key})
+#
+#     return Response(data={'error': 'User not valid!'}, status=status.HTTP_401_UNAUTHORIZED)
+#
+#
+#
+# # Serializers
+#
+# # from rest_framework import serializers
+# # from django.contrib.auth.models import User
+#
+#
+# class UserCreateSerializer(serializers.Serializer):
+#     username = serializers.CharField(max_length=150)
+#     password = serializers.CharField()
+#
+#     def validate(self, username):
+#         try:
+#             User.objects.get(username=username)
+#         except User.DoesNotExist:
+#             return username
+#         raise ValidationError('User already exists!')
 
 
 
