@@ -13,34 +13,35 @@ from users.models import SmsCode
 from users.serializers import UserCreateSerializer, UserAuthSerializer, UserLoginSerializer, SmsCodeSerializer
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import ValidationError
+from rest_framework.views import APIView
 
 
-@api_view(['POST'])
-def registration_api_view(request):
+class RegisterAPIView(APIView):
     def post(self, request):
     # username = request.data.get('username')
     # password = request.data.get('password')
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-    user = User.objects.create_user(
-        username = serializer.validated_data.get['username'],
-        password = serializer.validated_data.get['password'],
-        email = serializer.validated_data.get['email'],
-        is_active = False
-    )
-    code = ''.join([str(random.randint(0,9)) for  i in range(6)])
-    SmsCode.objects.create(code = code, user = user)
-    send_mail(
-        'Your code',
-        message=code,
-        from_email='<EMAIL>',
-        recipient_list=[user.email]
-    )
-    return Response(data={'user_id': user.id}, status=status.HTTP_201_CREATED)
+        user = User.objects.create_user(
+            username = serializer.validated_data.get['username'],
+            password = serializer.validated_data.get['password'],
+            email = serializer.validated_data.get['email'],
+            is_active = False
+        )
+        code = ''.join([str(random.randint(0,9)) for  i in range(6)])
+        SmsCode.objects.create(code = code, user = user)
+        send_mail(
+            'Your code',
+            message=code,
+            from_email='<EMAIL>',
+            recipient_list=[user.email]
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
     # user = User.objects.create_user(username=username, password=password, email=email, is_active=False)
-    return Response(data={'user_id': user.id}, status=status.HTTP_201_CREATED)
+    # return Response(data={'user_id': user.id}, status=status.HTTP_201_CREATED)
 
 class LoginView(APIView):
     def post(self, request):
@@ -67,17 +68,17 @@ class ConfirmSmsView(APIView):
         return Response(data={'active': True}, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
-def authorization_api_view(request):
-    serializer = UserAuthSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+class AuthAPIView(APIView):
+    def post(self, request):
+        serializer = UserAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    # username = serializer.validated_data.get('username')
-    # password = serializer.validated_data.get('password')
-    # user =  authenticate(username=username, password=password, email=email)
+        # username = serializer.validated_data.get('username')
+        # password = serializer.validated_data.get('password')
+        # user =  authenticate(username=username, password=password, email=email)
 
-    user =  authenticate(**serializer.validated_data)  # - упрощенный вариант без закоментированных
-    if user is not None:
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response(data={'key': token.key})
-    return Response(data={'error': 'User not valid!'}, status=status.HTTP_401_UNAUTHORIZED)
+        user =  authenticate(**serializer.validated_data)  # - упрощенный вариант без закоментированных
+        if user is not None:
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response(data={'key': token.key})
+        return Response(data={'error': 'User not valid!'}, status=status.HTTP_401_UNAUTHORIZED)
