@@ -9,6 +9,7 @@ urlpatterns = [
     # path('reviews/', views.review_list_create_api_view),
     # path('reviews/<int:id>/', views.review_detail_api_view),
     # path('', views.movie_review_api_view),
+    path('directors/', views.DirectorListCreateAPIView.as_view()),
     # GENERIC Classes
     path('dir/', views.DirectorListAPIView.as_view()),
     path('dir/<int:id>/', views.DirectorDetailAPIView.as_view()),

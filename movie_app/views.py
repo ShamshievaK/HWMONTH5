@@ -63,6 +63,19 @@ class MovieReviewAPIView(APIView):
         return Response(data=data)
 
 
+class DirectorListCreateAPIView(ListCreateAPIView):
+    serializer_class = DirectorSerializer
+    queryset = Director.objects.all()
+    def post(self, request, *args, **kwargs):
+        serializer = DirectorValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        name = serializer.validated_data.get('name')
+        director = Director.objects.create(name=name)    # 1 способ    # bulk_create-создает одним запросов несколько обьектов
+        # director = Director(name=name)
+        # Directoe(save) - 2 способ создания
+        return Response(status=status.HTTP_201_CREATED, data=DirectorSerializer(director).data)
+
 
 
 
